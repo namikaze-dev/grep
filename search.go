@@ -12,15 +12,25 @@ type Options struct {
 }
 
 func Search(rd io.Reader, opt Options) []string {
-	var res []string
+	var indices []int
+	var m = map[int]string{}
 
+	i := 0
 	scn := bufio.NewScanner(rd)
 	for scn.Scan() {
 		line := scn.Text()
 
 		if match(line, opt) {
-			res = append(res, line)
+			indices = append(indices, i)
+			m[i] = line
 		}
+
+		i += 1
+	}
+
+	var res []string
+	for _, i := range indices {
+		res = append(res, m[i])
 	}
 
 	return res
