@@ -7,8 +7,9 @@ import (
 )
 
 type Options struct {
-	Key             string
-	CaseInSensitive bool
+	Key              string
+	CaseInSensitive  bool
+	LinesBeforeMatch int
 }
 
 func Search(rd io.Reader, opt Options) []string {
@@ -19,20 +20,35 @@ func Search(rd io.Reader, opt Options) []string {
 	scn := bufio.NewScanner(rd)
 	for scn.Scan() {
 		line := scn.Text()
+		m[i] = line
 
 		if match(line, opt) {
 			indices = append(indices, i)
-			m[i] = line
 		}
 
 		i += 1
 	}
 
-	var res []string
+	// setup base context map
+	var ctxMap = map[int][]int{}
 	for _, i := range indices {
-		res = append(res, m[i])
+		ctxMap[i] = []int{i}
 	}
 
+	if opt.LinesBeforeMatch > 0 {
+		addIndicesBeforeMatch(ctxMap, opt.LinesBeforeMatch)
+	}
+
+	mIndices := mergeSlices(ctxMap, indices)
+
+	var res []string
+	for _, i := range mIndices {
+		if i == -1 {
+			res = append(res, "--")
+		} else {
+			res = append(res, m[i])
+		}
+	}
 	return res
 }
 
@@ -43,4 +59,60 @@ func match(line string, opt Options) bool {
 	} else {
 		return strings.Contains(line, opt.Key)
 	}
+}
+
+func addIndicesBeforeMatch(m map[int][]int, count int) {
+	for i, a := range m {
+		j, n := i-1, count
+
+		for n != 0 {
+			if j < 0 {
+				break
+			}
+			
+			a = append([]int{j}, a...)
+			j, n = j-1, n-1
+		}
+
+		m[i] = a
+	}
+}
+
+func mergeSlices(m map[int][]int, indices []int) []int {
+	var res []int
+
+	for _, i := range indices {
+		a := m[i]
+
+		res = appendIndices(res, a)
+	}
+
+	return res
+}
+
+func appendIndices(res, indices []int) []int {
+	for _, idx := range indices {
+		i := indexOf(res, idx)
+
+		if i != -1 {
+			continue
+		}
+
+		if len(res) == 0 || res[len(res)-1] == idx-1 {
+			res = append(res, idx)
+		} else {
+			res = append(res, -1, idx)
+		}
+	}
+
+	return res
+}
+
+func indexOf(s []int, v int) int {
+	for i := range s {
+		if s[i] == v {
+			return i
+		}
+	}
+	return -1
 }
