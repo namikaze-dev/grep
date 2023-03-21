@@ -43,7 +43,6 @@ func Search(rd io.Reader, opt Options) []string {
 	}
 
 	mIndices := mergeSlices(ctxMap, indices)
-	infoLog.Println(ctxMap, opt)
 
 	var res []string
 	for _, i := range mIndices {
