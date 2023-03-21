@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"strings"
 )
 
 var (
@@ -14,7 +13,7 @@ var (
 
 func main() {
 	var options struct {
-		r, i bool
+		r, i    bool
 		A, B, C int
 	}
 
@@ -26,20 +25,4 @@ func main() {
 	flag.Parse()
 
 	infoLog.Println(flag.Args())
-}
-
-func filterFlags(args []string) []string {
-	var bp int
-	for i, arg := range args {
-		if !strings.HasPrefix(arg, "-") {
-			bp = i
-			break
-		}
-
-		if i == len(args)-1 {
-			bp = len(args)
-		}
-	}
-
-	return args[bp:]
 }
