@@ -13,17 +13,17 @@ var (
 	errLog  = log.New(os.Stderr, "", 0)
 )
 
-func main() {
-	var options struct {
-		i       bool
-		A, B, C int
-		o       string
-	}
+var options struct {
+	i, C bool
+	A, B int
+	o    string
+}
 
+func main() {
 	flag.BoolVar(&options.i, "i", false, "case insensitize match")
 	flag.IntVar(&options.A, "A", 0, "print NUM lines of before match")
 	flag.IntVar(&options.B, "B", 0, "print NUM lines of after match")
-	flag.IntVar(&options.C, "C", 0, "print count of matches")
+	flag.BoolVar(&options.C, "C", false, "print count of matches")
 	flag.StringVar(&options.o, "o", "", "file to write output")
 	flag.Parse()
 
@@ -90,6 +90,12 @@ func setOuputDst(fn string) io.Writer {
 
 func printSearchResult(i io.Reader, o io.Writer, prefix string, opt Options) {
 	res := Search(i, opt)
+
+	if options.C {
+		fmt.Fprintf(o, "%v%v\n", prefix, len(res))
+		return
+	}
+
 	for _, l := range res {
 		fmt.Fprintf(o, "%v%v\n", prefix, l)
 	}
