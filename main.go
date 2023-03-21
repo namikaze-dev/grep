@@ -14,17 +14,18 @@ var (
 
 func main() {
 	var options struct {
-		A, B, C, r, i bool
+		r, i bool
+		A, B, C int
 	}
 
 	flag.BoolVar(&options.i, "i", false, "case insensitize match")
 	flag.BoolVar(&options.r, "r", false, "grep directory")
-	flag.BoolVar(&options.A, "A", false, "print NUM lines of before match")
-	flag.BoolVar(&options.B, "B", false, "print NUM lines of after match")
-	flag.BoolVar(&options.C, "C", false, "print count of matches")
+	flag.IntVar(&options.A, "A", 0, "print NUM lines of before match")
+	flag.IntVar(&options.B, "B", 0, "print NUM lines of after match")
+	flag.IntVar(&options.C, "C", 0, "print count of matches")
 	flag.Parse()
 
-	// args := filterFlags(os.Args[1:])
+	infoLog.Println(flag.Args())
 }
 
 func filterFlags(args []string) []string {
