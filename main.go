@@ -13,7 +13,7 @@ var (
 
 func main() {
 	var options struct {
-		i    bool
+		i       bool
 		A, B, C int
 	}
 
@@ -23,5 +23,23 @@ func main() {
 	flag.IntVar(&options.C, "C", 0, "print count of matches")
 	flag.Parse()
 
-	infoLog.Println(flag.Args())
+	if len(flag.Args()) == 0 {
+		infoLog.Println("grep: search key arg required")
+	}
+
+	// input from stdin
+	if len(flag.Args()) == 1 {
+		res := Search(os.Stdin, Options{
+			Key:              flag.Arg(0),
+			LinesAfterMatch:  options.A,
+			LinesBeforeMatch: options.B,
+			CaseInSensitive:  options.i,
+		})
+
+		for _, l := range res {
+			infoLog.Println(l)
+		}
+
+		return
+	}
 }
