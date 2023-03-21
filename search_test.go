@@ -9,32 +9,37 @@ import (
 )
 
 func TestSearchBasic(t *testing.T) {
-	content := "sample text\nSample TEXT\nfoo\nFoobar\nFOObaz"
-	rd := strings.NewReader(content)
-	options := main.Options{
-		Key:             "foo",
-		CaseInSensitive: true,
-	}
+	t.Run("basic case-insensitive", func(t *testing.T) {
+		content := "sample text\nSample TEXT\nfoo\nFoobar\nFOObaz"
+		rd := strings.NewReader(content)
+		options := main.Options{
+			Key:             "foo",
+			CaseInSensitive: true,
+		}
 
-	got := main.Search(rd, options)
-	want := []string{"foo", "Foobar", "FOObaz"}
+		got := main.Search(rd, options)
+		want := []string{"foo", "Foobar", "FOObaz"}
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v want %v", got, want)
-	}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
 
-	rd = strings.NewReader(content)
-	options = main.Options{
-		Key:             "foo",
-		CaseInSensitive: false,
-	}
+	t.Run("basic case-sensitive", func(t *testing.T) {
+		content := "hellofunc\nFunc\nfuncy world\nfunck"
+		rd := strings.NewReader(content)
+		options := main.Options{
+			Key:             "func",
+			CaseInSensitive: false,
+		}
 
-	got = main.Search(rd, options)
-	want = []string{"foo"}
+		got := main.Search(rd, options)
+		want := []string{"hellofunc", "funcy world", "funck"}
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v want %v", got, want)
-	}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
 }
 
 func TestSearch_LinesBeforeMatch(t *testing.T) {
@@ -95,8 +100,8 @@ func TestSearch_LinesAfterMatch(t *testing.T) {
 		content := "sample text\nSample TEXT\nfoo\nFoobar\nFOObaz"
 		rd := strings.NewReader(content)
 		options := main.Options{
-			Key:              "foo",
-			CaseInSensitive:  true,
+			Key:             "foo",
+			CaseInSensitive: true,
 			LinesAfterMatch: 2,
 		}
 
@@ -112,8 +117,8 @@ func TestSearch_LinesAfterMatch(t *testing.T) {
 		content := "genos\nhelloworld\nhellobar\nfoobar\ngenos\nbaz"
 		rd := strings.NewReader(content)
 		options := main.Options{
-			Key:              "genos",
-			CaseInSensitive:  false,
+			Key:             "genos",
+			CaseInSensitive: false,
 			LinesAfterMatch: 1,
 		}
 
@@ -129,8 +134,8 @@ func TestSearch_LinesAfterMatch(t *testing.T) {
 		content := "genos\nhelloworld\nhellobar\nfoobar\ngenos\nbaz"
 		rd := strings.NewReader(content)
 		options := main.Options{
-			Key:              "genos",
-			CaseInSensitive:  false,
+			Key:             "genos",
+			CaseInSensitive: false,
 			LinesAfterMatch: 2000,
 		}
 

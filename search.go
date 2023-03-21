@@ -10,7 +10,7 @@ type Options struct {
 	Key              string
 	CaseInSensitive  bool
 	LinesBeforeMatch int
-	LinesAfterMatch int
+	LinesAfterMatch  int
 }
 
 func Search(rd io.Reader, opt Options) []string {
@@ -43,6 +43,7 @@ func Search(rd io.Reader, opt Options) []string {
 	}
 
 	mIndices := mergeSlices(ctxMap, indices)
+	infoLog.Println(ctxMap, opt)
 
 	var res []string
 	for _, i := range mIndices {
@@ -72,7 +73,7 @@ func addIndicesBeforeMatch(m map[int][]int, count int) {
 			if j < 0 {
 				break
 			}
-			
+
 			a = append([]int{j}, a...)
 			j, n = j-1, n-1
 		}
@@ -89,7 +90,7 @@ func addIndicesAfterMatch(m map[int][]int, count int, linesLen int) {
 			if j == linesLen {
 				break
 			}
-			
+
 			a = append(a, j)
 			j, n = j+1, n-1
 		}
@@ -118,7 +119,7 @@ func appendIndices(res, indices []int) []int {
 			continue
 		}
 
-		if len(res) == 0 || res[len(res)-1] == idx-1 {
+		if len(indices) == 1 || len(res) == 0 || res[len(res)-1] == idx-1 {
 			res = append(res, idx)
 		} else {
 			res = append(res, -1, idx)
