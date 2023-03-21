@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 var (
@@ -59,7 +61,7 @@ func main() {
 		}
 
 		if fs.IsDir() {
-
+			searchDir(fn, output)
 		}
 
 		var prefix string
@@ -99,4 +101,29 @@ func printSearchResult(i io.Reader, o io.Writer, prefix string, opt Options) {
 	for _, l := range res {
 		fmt.Fprintf(o, "%v%v\n", prefix, l)
 	}
+}
+
+func searchDir(dir string, o io.Writer) {
+	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			errLog.Printf("grep: %v\n", err)
+			return nil
+		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			errLog.Printf("grep: %v\n", err)
+			return nil
+		}
+
+		printSearchResult(f, o, path + ":", Options{
+			Key:              flag.Arg(0),
+			LinesAfterMatch:  options.A,
+			LinesBeforeMatch: options.B,
+			CaseInSensitive:  options.i,
+		})
+		f.Close()
+
+		return nil
+	})
 }
