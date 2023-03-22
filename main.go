@@ -124,8 +124,12 @@ func searchDir(dir string, o io.Writer) {
 	// setup worker pool 
 	var jobs = make(chan string, len(files))
 	var results = make(chan string, len(files))
+	
 	// 10% of files as workers 
 	var workers = int(len(files) / 10)
+	if workers == 0 {
+		workers = 2
+	}
 
 	for id := 1; id <= workers; id++ {
 		go searchDirWorker(id, jobs, results)
