@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"strings"
 )
@@ -14,19 +15,20 @@ type Options struct {
 }
 
 func Search(rd io.Reader, opt Options) []string {
-	var indices []int
-	var lines []string
+	// duplicate reader
+	var buf bytes.Buffer
+	dup := io.TeeReader(rd, &buf)
 
-	i := 0
-	scn := bufio.NewScanner(rd)
+	// find matching lines
+	var i int
+	var indices []int
+	scn := bufio.NewScanner(dup)
 	for scn.Scan() {
 		line := scn.Text()
-		lines = append(lines, line)
-
+		// infoLog.Println(line)
 		if match(line, opt) {
 			indices = append(indices, i)
 		}
-
 		i += 1
 	}
 
@@ -39,19 +41,33 @@ func Search(rd io.Reader, opt Options) []string {
 	if opt.LinesBeforeMatch > 0 {
 		addIndicesBeforeMatch(ctxMap, opt.LinesBeforeMatch)
 	} else if opt.LinesAfterMatch > 0 {
-		addIndicesAfterMatch(ctxMap, opt.LinesAfterMatch, len(lines))
+		addIndicesAfterMatch(ctxMap, opt.LinesAfterMatch, i)
 	}
 
+	// create matching lines indices (before and after)
 	mIndices := mergeSlices(ctxMap, indices)
-
 	var res []string
-	for _, i := range mIndices {
-		if i == -1 {
+
+	// convert indices to slice of strings
+	i, j := 0, 0
+	scn = bufio.NewScanner(&buf)
+	for scn.Scan() && j < len(mIndices) {
+		if mIndices[j] == -1 {
+			i, j = i + 1, j + 1
 			res = append(res, "--")
-		} else {
-			res = append(res, lines[i])
+			continue
 		}
+
+		if i != mIndices[j] {
+			i += 1
+			continue
+		}
+
+		line := scn.Text()
+		res = append(res, line)
+		i, j = i + 1, j + 1
 	}
+
 	return res
 }
 
