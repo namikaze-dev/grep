@@ -2,13 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 var (
@@ -77,7 +75,7 @@ func main() {
 			LinesBeforeMatch: options.B,
 			CaseInSensitive:  options.i,
 		})
-		
+
 		if i != len(flag.Args()[1:]) {
 			res += "\n"
 		}
@@ -85,17 +83,6 @@ func main() {
 		output.Write([]byte(res))
 		f.Close()
 	}
-}
-
-func setOuputDst(fn string) io.Writer {
-	if fn != "" {
-		f, err := os.Create(fn)
-		if err != nil {
-			errLog.Fatalf("grep: %v", err)
-		}
-		return f
-	}
-	return os.Stdout
 }
 
 func searchDir(dir string, o io.Writer) {
@@ -115,11 +102,11 @@ func searchDir(dir string, o io.Writer) {
 		return nil
 	})
 
-	// setup worker pool 
+	// setup worker pool
 	var jobs = make(chan string, len(files))
 	var results = make(chan string, len(files))
-	
-	// 10% of files as workers 
+
+	// 10% of files as workers
 	var workers = int(len(files) / 10)
 	if workers == 0 {
 		workers = 2
@@ -135,7 +122,7 @@ func searchDir(dir string, o io.Writer) {
 	close(jobs)
 
 	for range files {
-		infoLog.Print(<- results)
+		infoLog.Print(<-results)
 	}
 }
 
@@ -147,7 +134,7 @@ func searchDirWorker(id int, jobs <-chan string, results chan<- string) {
 			continue
 		}
 
-		res := createSearchResult(f, fn + ":", Options{
+		res := createSearchResult(f, fn+":", Options{
 			Key:              flag.Arg(0),
 			LinesAfterMatch:  options.A,
 			LinesBeforeMatch: options.B,
@@ -157,19 +144,4 @@ func searchDirWorker(id int, jobs <-chan string, results chan<- string) {
 
 		f.Close()
 	}
-}
-
-func createSearchResult(i io.Reader, prefix string, opt Options) string {
-	r := Search(i, opt)
-
-	if options.C {
-		return fmt.Sprintf("%v%v\n", prefix, len(r))
-	}
-
-	var res []string
-	for _, l := range r {
-		res = append(res, fmt.Sprintf("%v%v", prefix, l))
-	}
-
-	return strings.Join(res, "\n")
 }
