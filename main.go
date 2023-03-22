@@ -39,16 +39,17 @@ func main() {
 
 	// input from stdin
 	if len(flag.Args()) == 1 {
-		printSearchResult(os.Stdin, output, "", Options{
+		res := createSearchResult(os.Stdin, "", Options{
 			Key:              flag.Arg(0),
 			LinesAfterMatch:  options.A,
 			LinesBeforeMatch: options.B,
 			CaseInSensitive:  options.i,
 		})
+		output.Write([]byte(res))
 		return
 	}
 
-	for _, fn := range flag.Args()[1:] {
+	for i, fn := range flag.Args()[1:] {
 		f, err := os.Open(fn)
 		if err != nil {
 			errLog.Printf("grep: %v\n", err)
@@ -70,12 +71,18 @@ func main() {
 			prefix = fn + ":"
 		}
 
-		printSearchResult(f, output, prefix, Options{
+		res := createSearchResult(f, prefix, Options{
 			Key:              flag.Arg(0),
 			LinesAfterMatch:  options.A,
 			LinesBeforeMatch: options.B,
 			CaseInSensitive:  options.i,
 		})
+		
+		if i != len(flag.Args()[1:]) {
+			res += "\n"
+		}
+
+		output.Write([]byte(res))
 		f.Close()
 	}
 }
@@ -89,19 +96,6 @@ func setOuputDst(fn string) io.Writer {
 		return f
 	}
 	return os.Stdout
-}
-
-func printSearchResult(i io.Reader, o io.Writer, prefix string, opt Options) {
-	res := Search(i, opt)
-
-	if options.C {
-		fmt.Fprintf(o, "%v%v\n", prefix, len(res))
-		return
-	}
-
-	for _, l := range res {
-		fmt.Fprintf(o, "%v%v\n", prefix, l)
-	}
 }
 
 func searchDir(dir string, o io.Writer) {
