@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -104,26 +105,73 @@ func printSearchResult(i io.Reader, o io.Writer, prefix string, opt Options) {
 }
 
 func searchDir(dir string, o io.Writer) {
+	var files []string
+	// traverse dir and fetch all file names
 	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			errLog.Printf("grep: %v\n", err)
 			return nil
 		}
 
-		f, err := os.Open(path)
-		if err != nil {
-			errLog.Printf("grep: %v\n", err)
+		if d.IsDir() {
 			return nil
 		}
 
-		printSearchResult(f, o, path + ":", Options{
+		files = append(files, path)
+		return nil
+	})
+
+	// setup worker pool 
+	var jobs = make(chan string, len(files))
+	var results = make(chan string, len(files))
+	// 10% of files as workers 
+	var workers = int(len(files) / 10)
+
+	for id := 1; id <= workers; id++ {
+		go searchDirWorker(id, jobs, results)
+	}
+
+	for _, fn := range files {
+		jobs <- fn
+	}
+	close(jobs)
+
+	for range files {
+		infoLog.Print(<- results)
+	}
+}
+
+func searchDirWorker(id int, jobs <-chan string, results chan<- string) {
+	for fn := range jobs {
+		f, err := os.Open(fn)
+		if err != nil {
+			errLog.Printf("grep: %v\n", err)
+			continue
+		}
+
+		res := createSearchResult(f, fn + ":", Options{
 			Key:              flag.Arg(0),
 			LinesAfterMatch:  options.A,
 			LinesBeforeMatch: options.B,
 			CaseInSensitive:  options.i,
 		})
-		f.Close()
+		results <- res
 
-		return nil
-	})
+		f.Close()
+	}
+}
+
+func createSearchResult(i io.Reader, prefix string, opt Options) string {
+	r := Search(i, opt)
+
+	if options.C {
+		return fmt.Sprintf("%v%v\n", prefix, len(r))
+	}
+
+	var res []string
+	for _, l := range r {
+		res = append(res, fmt.Sprintf("%v%v", prefix, l))
+	}
+
+	return strings.Join(res, "\n")
 }
